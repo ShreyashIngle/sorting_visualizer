@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-
 export default function AlgorithmVisualizer({ selectedAlgorithm }) {
-
   const [array, setArray] = useState([]);
   const [algorithm, setAlgorithm] = useState(selectedAlgorithm || "bubbleSort"); // Use prop value or default
   const [visualSteps, setVisualSteps] = useState([]);
@@ -23,13 +21,15 @@ export default function AlgorithmVisualizer({ selectedAlgorithm }) {
     };
   }, []);
 
-  
   useEffect(() => {
     setVisualSteps([]);
     setCurrentStep(0);
     setIsRunning(false);
     setFoundIndex(-1);
     setAlgorithm(selectedAlgorithm); // Update algorithm when prop changes
+    if (selectedAlgorithm === "binarySearch") {
+      setArray((prevArray) => [...prevArray].sort((a, b) => a - b));
+    }
   }, [selectedAlgorithm]);
 
   const generateRandomArray = () => {
@@ -118,10 +118,22 @@ export default function AlgorithmVisualizer({ selectedAlgorithm }) {
           stepIndex++;
           animationRef.current = setTimeout(animate, speed); // Use the latest speed
         } else {
-          setIsRunning(false);
+          // After sorting is done, wait for 1 second and then animate coloring the array green from left to right
+          setTimeout(() => {
+            let colorIndex = 0;
+            const colorAnimate = () => {
+              if (colorIndex < array.length) {
+                setCurrentStep(array.length + colorIndex);
+                colorIndex++;
+                animationRef.current = setTimeout(colorAnimate, speed);
+              } else {
+                setIsRunning(false);
+              }
+            };
+            colorAnimate();
+          }, 1000);
         }
       };
-      
 
       animate();
     } catch (error) {
@@ -139,7 +151,6 @@ export default function AlgorithmVisualizer({ selectedAlgorithm }) {
         if (arr[j] > arr[j + 1]) {
           [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
           steps.push(arr.slice());
-
         }
       }
     }
@@ -353,7 +364,6 @@ export default function AlgorithmVisualizer({ selectedAlgorithm }) {
       steps.push(stepArray);
 
       if (sortedArr[mid] === target) {
-
         return { steps: [...steps, stepArray], foundIndex: mid };
       }
       if (sortedArr[mid] < target) {
@@ -420,45 +430,42 @@ export default function AlgorithmVisualizer({ selectedAlgorithm }) {
         </div>
       )}
 
-<div className="border rounded-lg p-4 bg-white shadow-lg">
-  <h3 className="text-lg font-semibold mb-4">Visualization</h3>
-  <div className="flex justify-center items-end h-64 bg-gray-100 p-4">
-    {array.map((value, index) => (
-      <div
-        key={index}
-        style={{
-          height: `${(value / 100) * 100}%`, // Keep it as a percentage to fit within the container
-          width: '30px', // Make the bars wider
-        }}
-        className={`mx-1 transition-all duration-300 flex flex-col justify-end relative ${
-          index === currentStep
-            ? "bg-red-500"
-            : foundIndex === index
-            ? "bg-green-500"
-            : "bg-blue-500"
-        }`}
-      >
-        <span className="absolute bottom-0 left-0 right-0 text-xs text-center transform -rotate-90 origin-bottom translate-y-full mt-1">
-          {value}
-        </span>
+      <div className="border rounded-lg p-4 bg-white shadow-lg">
+        <h3 className="text-lg font-semibold mb-4">Visualization</h3>
+        <div className="flex justify-center items-end h-64 bg-gray-100 p-4">
+          {array.map((value, index) => (
+            <div
+              key={index}
+              style={{
+                height: `${(value / 100) * 100}%`, // Keep it as a percentage to fit within the container
+                width: "30px", // Make the bars wider
+              }}
+              className={`mx-1 transition-all duration-300 flex flex-col justify-end relative ${
+                index === currentStep
+                  ? "bg-red-500"
+                  : foundIndex === index
+                  ? "bg-green-500"
+                  : currentStep > array.length && index <= currentStep - array.length
+                  ? "bg-green-500"
+                  : "bg-blue-500"
+              }`}
+            >
+              <span className="absolute bottom-0 left-0 right-0 text-xs text-center transform -rotate-90 origin-bottom translate-y-full mt-1">
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 text-sm text-gray-600">
+          <p>
+            Current step: {currentStep + 1} / {visualSteps.length}
+          </p>
+        </div>
       </div>
-    ))}
-  </div>
-
-  <div className="mt-4 text-sm text-gray-600">
-    <p>
-      Current step: {currentStep + 1} / {visualSteps.length}
-    </p>
-  </div>
-</div>
-
     </div>
   );
 }
-
-
-
-
 
 
 
